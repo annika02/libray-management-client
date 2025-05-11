@@ -10,11 +10,13 @@ import AuthProvider from "./ContexProvider/AuthProvider";
 import Loging from "./Components/Loging/Loging";
 import Home from "./Root/Layout/Home";
 import Private from "./Private/Private";
+import NotFound from "./Root/Layout/NotFound";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Root></Root>,
+    errorElement: <NotFound></NotFound>,
     children: [
       {
         path: "reg",
