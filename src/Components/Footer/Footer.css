@@ -1,0 +1,128 @@
+/* Footer Container Styling */
+.footer-container {
+    background-color: #333;
+    color: white;
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+    animation: fadeIn 1.5s ease-out;
+  }
+  
+  .footer-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 30px;
+    animation: slideUp 1.5s ease-out;
+  }
+  
+  .footer-links, .footer-social {
+    width: 200px;
+  }
+  
+  .footer-title {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #4c51bf;
+    animation: bounceInLeft 1.2s ease-out;
+  }
+  
+  .footer-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-link {
+    text-decoration: none;
+    color: #bbb;
+    font-size: 1rem;
+    display: block;
+    margin: 5px 0;
+    transition: color 0.3s ease;
+  }
+  
+  .footer-link:hover {
+    color: #4c51bf;
+  }
+  
+  .social-icons {
+    display: flex;
+    justify-content: space-evenly;
+    margin-top: 15px;
+  }
+  
+  .social-icon {
+    color: #bbb;
+    font-size: 1.5rem;
+    transition: color 0.3s ease;
+  }
+  
+  .social-icon:hover {
+    color: #4c51bf;
+  }
+  
+  .footer-bottom {
+    margin-top: 20px;
+    font-size: 0.875rem;
+    color: #bbb;
+  }
+  
+  .footer-bottom p {
+    margin: 0;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes slideUp {
+    0% {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes bounceInLeft {
+    0% {
+      transform: translateX(-50px);
+      opacity: 0;
+    }
+    60% {
+      transform: translateX(20px);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Responsive Styling for Smaller Screens */
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .footer-links, .footer-social {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+  
+    .footer-title {
+      font-size: 1rem;
+    }
+  }

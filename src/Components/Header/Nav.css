@@ -1,0 +1,29 @@
+/* Navbar Styles */
+@media (max-width: 426px) {
+    .hidden {
+        display: none;
+    }
+    .md\:hidden {
+        display: block;
+    }
+    .md\:flex {
+        display: none;
+    }
+
+    /* Hide the regDiv on small screens */
+    .regDiv {
+        display: none;
+    }
+    .iconn{
+         margin-left: 280px;
+    }
+    .logoIcon
+    {
+       margin-left: 3opx;
+    }
+
+    /* Add rule to show regDiv when user is logged in */
+    .user-logged-in .regDiv {
+        display: block;
+    }
+}
