@@ -21,6 +21,25 @@ import UpdateBooks from "./Root/Layout/UpdateBooks";
 import AddBook from "./Root/Layout/AddBooks";
 import NotFound from "./Root/Layout/NotFound";
 
+// Category mapping to match backend routes
+const categoryMap = {
+  fiction: "fiction",
+  science: "science",
+  history: "history",
+  nonfiction: "non-fiction",
+  "non-fiction": "non-fiction",
+  Fiction: "fiction",
+  Science: "science",
+  History: "history",
+  NonFiction: "non-fiction",
+  Nonfiction: "non-fiction",
+};
+
+const normalizeCategory = (category) => {
+  if (!category) return "fiction"; // Fallback
+  const normalized = category.toLowerCase().replace(/\s|-/g, "");
+  return categoryMap[normalized] || normalized;
+};
 const router = createBrowserRouter([
   {
     path: "/",
@@ -68,12 +87,17 @@ const router = createBrowserRouter([
           </Private>
         ),
         loader: async ({ params }) => {
-          const { category, id } = params;
+          const { id, category: rawCategory } = params;
+          const category = normalizeCategory(rawCategory);
+          console.log(`Fetching details for /${category}/${id}`); // Debug log
           const response = await fetch(
             `https://library-server-alpha.vercel.app/${category}/${id}`
           );
           if (!response.ok) {
-            throw new Error("Failed to fetch details");
+            console.error(
+              `Error fetching /${category}/${id}: ${response.status}`
+            );
+            throw new Response("Not Found", { status: 404 });
           }
           return response.json();
         },
