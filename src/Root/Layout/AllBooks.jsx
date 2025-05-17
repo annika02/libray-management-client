@@ -86,6 +86,13 @@ const AllBooks = () => {
     }
   };
 
+  const handleUpdate = (id) => {
+    // Store the book ID in localStorage
+    localStorage.setItem("id", id);
+    // Navigate to the update page
+    navigate("/update");
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-4">
@@ -133,12 +140,20 @@ const AllBooks = () => {
                 />
                 <span className="ml-2 text-sm">({book.rating})</span>
               </div>
-              <button
-                onClick={() => handleDetails(book.category, book._id)}
-                className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Details
-              </button>
+              <div className="mt-4 space-x-2">
+                <button
+                  onClick={() => handleDetails(book.category, book._id)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() => handleUpdate(book._id)}
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                  Update
+                </button>
+              </div>
             </div>
           ))}
         </div>

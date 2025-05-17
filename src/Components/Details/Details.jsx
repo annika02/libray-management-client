@@ -3,10 +3,12 @@ import { useContext, useState } from "react";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const Details = () => {
   const data = useLoaderData(); // Load book data
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   // Check if data is valid
   if (!data || !data._id) {
@@ -88,6 +90,13 @@ const Details = () => {
     }
   };
 
+  const handleUpdate = () => {
+    // Store the book ID in localStorage
+    localStorage.setItem("id", _id);
+    // Navigate to the update page
+    navigate("/update");
+  };
+
   // Reuse normalizeCategory for borrow URL
   const normalizeCategory = (category) => {
     const categoryMap = {
@@ -142,18 +151,26 @@ const Details = () => {
               {details}
             </p>
           </div>
-          {/* Borrow Button */}
-          <button
-            className={`mt-6 px-4 py-2 rounded-lg text-white ${
-              quantity === 0
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-500 hover:bg-blue-600"
-            }`}
-            onClick={() => setIsModalOpen(true)}
-            disabled={quantity === 0}
-          >
-            Borrow
-          </button>
+          {/* Borrow and Update Buttons */}
+          <div className="mt-6 space-x-2">
+            <button
+              className={`px-4 py-2 rounded-lg text-white ${
+                quantity === 0
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
+              }`}
+              onClick={() => setIsModalOpen(true)}
+              disabled={quantity === 0}
+            >
+              Borrow
+            </button>
+            <button
+              onClick={handleUpdate}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              Update
+            </button>
+          </div>
         </div>
       </div>
       {/* Modal */}
