@@ -8,7 +8,7 @@ const AllBooks = () => {
   const navigate = useNavigate();
   useEffect(() => {
     axios
-      .get("http://localhost:5000/allbooks")
+      .get("https://library-server-alpha.vercel.app/allbooks")
       .then((response) => setBooks(response.data))
       .catch((error) => console.error("Error fetching books:", error));
   }, []);

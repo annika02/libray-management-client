@@ -1,39 +1,33 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { useLoaderData } from "react-router-dom";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Helmet } from "react-helmet";
-
 const BorrowedBooks = () => {
   const borrowedData = useLoaderData(); // All borrowed books data
   const { user } = useContext(AuthContext); // Logged-in user details
-  const [userBorrowedBooks, setUserBorrowedBooks] = useState([]); // ✅ Start with empty array
-
-  // ✅ Safely filter when both data and user are ready
-  useEffect(() => {
-    if (borrowedData && user?.email) {
-      const filteredBooks = borrowedData.filter(
-        (book) => book.email === user.email
-      );
-      setUserBorrowedBooks(filteredBooks);
-    }
-  }, [borrowedData, user]);
+  const [userBorrowedBooks, setUserBorrowedBooks] = useState(
+    borrowedData.filter((book) => book.email === user.email)
+  );
 
   const handleReturnBook = async (bookId, category) => {
     console.log(bookId);
     try {
       const normalizedCategory = category.toLowerCase(); // Normalize category
       const response = await axios.patch(
-        `http://localhost:5000/${normalizedCategory}/${bookId}/return`
+        `https://library-server-alpha.vercel.app/${normalizedCategory}/${bookId}/return`
       );
       if (response.status === 200) {
         // Delete the book after successful return
-        await axios.delete(`http://localhost:5000/borrow/${bookId}`, {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        await axios.delete(
+          `https://library-server-alpha.vercel.app/borrow/${bookId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         Swal.fire({
           icon: "success",
           title: "Successfully Deleted",

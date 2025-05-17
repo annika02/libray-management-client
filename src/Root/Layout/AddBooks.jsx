@@ -48,11 +48,15 @@ const AddBook = () => {
 
     try {
       // Send the form data to the server
-      await axios.post("http://localhost:5000/allbooks", formData, {
-        headers: {
-          "Content-Type": "application/json", // Set as JSON
-        },
-      });
+      await axios.post(
+        "https://library-server-alpha.vercel.app/allbooks",
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json", // Set as JSON
+          },
+        }
+      );
       Swal.fire({
         icon: "success",
         title: "Added Book Successfully",
