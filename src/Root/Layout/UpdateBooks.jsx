@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -17,22 +16,52 @@ const UpdateBooks = () => {
     author: "",
     category: "",
     rating: "",
+    quantity: "", // Added quantity field
   });
 
   useEffect(() => {
-    axios
-      .get(`https://library-server-alpha.vercel.app/allbooks/${storeId}`)
-      .then((response) => {
-        const data = response.data;
-        setBook({
-          image: data.image || "",
-          name: data.name || "",
-          author: data.author || "",
-          category: data.category || "",
-          rating: data.rating?.toString() || "",
+    const fetchBook = async () => {
+      try {
+        const response = await fetch(
+          `https://library-server-alpha.vercel.app/allbooks/${storeId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        if (data && !data.error) {
+          setBook({
+            image: data.image || "",
+            name: data.name || "",
+            author: data.author || "",
+            category: data.category || "",
+            rating: data.rating?.toString() || "",
+            quantity: data.quantity?.toString() || "0", // Initialize quantity
+          });
+        } else {
+          console.error("Book not found:", data.error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Book not found.",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching book:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to fetch book details.",
         });
-      })
-      .catch((error) => console.error("Error fetching book:", error));
+      }
+    };
+
+    if (storeId) {
+      fetchBook();
+    }
   }, [storeId]);
 
   const handleChange = (e) => {
@@ -43,12 +72,13 @@ const UpdateBooks = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const bookToUpdate = {
       ...book,
-      rating: parseFloat(book.rating), // Ensure rating is a number
+      rating: parseFloat(book.rating),
+      quantity: parseInt(book.quantity, 10), // Ensure quantity is an integer
     };
 
     // Validation
@@ -58,29 +88,49 @@ const UpdateBooks = () => {
       !bookToUpdate.author.trim() ||
       !bookToUpdate.category.trim() ||
       isNaN(bookToUpdate.rating) ||
-      bookToUpdate.rating < 1
+      bookToUpdate.rating < 1 ||
+      bookToUpdate.rating > 5 ||
+      isNaN(bookToUpdate.quantity) ||
+      bookToUpdate.quantity < 0
     ) {
-      alert("Please fill in all fields correctly");
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Input",
+        text: "Please fill in all fields correctly. Rating must be 1-5, and quantity must be non-negative.",
+      });
       return;
     }
 
-    axios
-      .put(
+    try {
+      const response = await fetch(
         `https://library-server-alpha.vercel.app/allbooks/${storeId}`,
-        bookToUpdate
-      )
-      .then(() => {
-        Swal.fire({
-          icon: "success",
-          title: "Updated Book Successfully",
-          text: "Book information has been updated.",
-        });
-        navigate("/allbooks");
-      })
-      .catch((error) => {
-        console.error("Update failed:", error.response?.data || error.message);
-        alert("Failed to update book");
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bookToUpdate),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update book");
+      }
+
+      Swal.fire({
+        icon: "success",
+        title: "Updated Book Successfully",
+        text: "Book information has been updated.",
       });
+      navigate("/allbooks");
+    } catch (error) {
+      console.error("Update failed:", error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: "Failed to update book. Please try again.",
+      });
+    }
   };
 
   return (
@@ -141,11 +191,26 @@ const UpdateBooks = () => {
             className="w-full p-2 border border-gray-300 rounded-md"
           >
             <option value="">-- Select a category --</option>
-            <option value="Fiction">Fiction</option>
-            <option value="Science">Science</option>
-            <option value="History">History</option>
-            <option value="Non-Fiction">Non-Fiction</option>
+            <option value="fiction">Fiction</option>
+            <option value="science">Science</option>
+            <option value="history">History</option>
+            <option value="nonfiction">Non-Fiction</option>
           </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Quantity
+          </label>
+          <input
+            type="number"
+            name="quantity"
+            value={book.quantity}
+            onChange={handleChange}
+            min="0"
+            required
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
         </div>
 
         <div>
