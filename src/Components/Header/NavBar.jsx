@@ -1,7 +1,15 @@
 import { NavLink } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
-import "./Nav.css";
+import {
+  FaBook,
+  FaPlusCircle,
+  FaHome,
+  FaSignInAlt,
+  FaUserPlus,
+  FaBars,
+  FaSignOutAlt,
+} from "react-icons/fa";
 
 const Navbar = () => {
   const { user, signout } = useContext(AuthContext);
@@ -23,158 +31,188 @@ const Navbar = () => {
   };
 
   return (
-    <>
-      <div
-        className={`mt-2 w-11/12 h-14 mx-auto flex flex-row justify-between items-center ${
-          user ? "user-logged-in" : ""
-        }`}
-      >
-        {/* Logo Div */}
-        <div className="  w-[20%] h-full rounded-full overflow-hidden">
-          <span className="text-3xl font-serif font-bold text-yellow-400">
-            LR-<span className="text-green-400">Shelf</span>
-          </span>
-        </div>
+    <nav className="bg-gradient-to-r from-blue-900 to-purple-800 shadow-lg">
+      <div className="container mx-auto px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <span className="text-3xl font-bold text-yellow-400 flex items-center">
+              <FaBook className="mr-2" /> LibroSphere
+            </span>
+          </div>
 
-        {/* Route Div */}
-        <div className="flex flex-row gap-3 font-bold hidden md:flex">
-          <NavLink
-            to="/"
-            className={({ isActive }) => (isActive ? "text-red-500" : "")}
-          >
-            Home
-          </NavLink>
-          {user && (
-            <div className="flex gap-2">
-              <NavLink
-                to="/allbooks"
-                className={({ isActive }) => (isActive ? "text-red-500" : "")}
-              >
-                All Books
-              </NavLink>
-              <NavLink
-                to="/addbooks"
-                className={({ isActive }) => (isActive ? "text-red-500" : "")}
-              >
-                Add Books
-              </NavLink>
-              <NavLink
-                to="/borrowed"
-                className={({ isActive }) => (isActive ? "text-red-500" : "")}
-              >
-                Borrowed Books
-              </NavLink>
-            </div>
-          )}
-        </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                `text-white hover:text-yellow-300 transition-colors flex items-center ${
+                  isActive ? "text-yellow-400 font-bold" : ""
+                }`
+              }
+            >
+              <FaHome className="mr-1" /> Home
+            </NavLink>
 
-        <div className="md:hidden">
-          <span className="text-sm font-serif font-bold text-yellow-400">
-            LR-<span className="text-green-400">Shelf</span>
-          </span>
-        </div>
-
-        {/* Hamburger Icon for Small Screens */}
-        <div className="iconn md:hidden">
-          <button onClick={toggleDropdown} className="text-3xl">
-            &#9776; {/* Hamburger icon */}
-          </button>
-        </div>
-
-        {/* Reg & Login Div */}
-        <div className="w-[30%] h-full flex gap-3 justify-center items-center">
-          {!user && (
-            <div>
-              <NavLink to="/reg">
-                <button className="regDiv  p-2 hover:bg-red-100 bg-green-100 rounded-md btn-custom font-bold text-black">
-                  Registration
-                </button>
-              </NavLink>
-              <NavLink to="/login">
-                <button className="regDiv  p-2 hover:bg-gray-100 bg-red-100 rounded-md btn-custom font-bold text-black">
-                  Login
-                </button>
-              </NavLink>
-            </div>
-          )}
-          {user && (
-            <div className="relative group w-40 h-[120px] flex items-center bg-transparent">
-              {/* User Photo */}
-              <img
-                src={userPhoto}
-                alt="User Image"
-                className="w-10 h-10 mx-auto rounded-full border-2 border-gray-300 shadow-md ml-[20px]"
-              />
-
-              {/* Dropdown Menu */}
-              <div className="absolute hidden group-hover:flex flex-col items-center top-12 left-1/2 -translate-x-1/2 bg-white w-40 py-2 rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 mt-6">
-                <div className="px-3 py-1 w-full text-center text-gray-700 font-semibold bg-gray-100 rounded-t-lg">
-                  <h1>{user.displayName}</h1>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-3/4 px-4 py-1 text-sm text-white bg-red-500 rounded-md hover:bg-red-600 transition "
+            {user && (
+              <>
+                <NavLink
+                  to="/allbooks"
+                  className={({ isActive }) =>
+                    `text-white hover:text-yellow-300 transition-colors flex items-center ${
+                      isActive ? "text-yellow-400 font-bold" : ""
+                    }`
+                  }
                 >
-                  Logout
-                </button>
+                  <FaBook className="mr-1" /> All Books
+                </NavLink>
+                <NavLink
+                  to="/addbooks"
+                  className={({ isActive }) =>
+                    `text-white hover:text-yellow-300 transition-colors flex items-center ${
+                      isActive ? "text-yellow-400 font-bold" : ""
+                    }`
+                  }
+                >
+                  <FaPlusCircle className="mr-1" /> Add Books
+                </NavLink>
+                <NavLink
+                  to="/borrowed"
+                  className={({ isActive }) =>
+                    `text-white hover:text-yellow-300 transition-colors flex items-center ${
+                      isActive ? "text-yellow-400 font-bold" : ""
+                    }`
+                  }
+                >
+                  <FaBook className="mr-1" /> Borrowed
+                </NavLink>
+              </>
+            )}
+          </div>
+
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-4">
+            {!user ? (
+              <>
+                <NavLink
+                  to="/reg"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold py-2 px-4 rounded-full flex items-center transition-all"
+                >
+                  <FaUserPlus className="mr-2" /> Register
+                </NavLink>
+                <NavLink
+                  to="/login"
+                  className="bg-white hover:bg-gray-100 text-blue-900 font-bold py-2 px-4 rounded-full flex items-center transition-all"
+                >
+                  <FaSignInAlt className="mr-2" /> Login
+                </NavLink>
+              </>
+            ) : (
+              <div className="relative group">
+                <div className="flex items-center cursor-pointer">
+                  <img
+                    src={userPhoto || "https://via.placeholder.com/40"}
+                    alt="User"
+                    className="w-10 h-10 rounded-full border-2 border-yellow-400 object-cover"
+                  />
+                </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+                  <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                    <p className="font-semibold">{user.displayName}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                  >
+                    <FaSignOutAlt className="mr-2" /> Logout
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={toggleDropdown}
+              className="text-white focus:outline-none"
+            >
+              <FaBars className="text-2xl" />
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Dropdown Menu */}
+        {dropdownVisible && (
+          <div className="md:hidden mt-4 bg-white rounded-lg shadow-lg py-2">
+            <NavLink
+              to="/"
+              className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+              onClick={toggleDropdown}
+            >
+              <FaHome className="mr-2" /> Home
+            </NavLink>
+
+            {user && (
+              <>
+                <NavLink
+                  to="/allbooks"
+                  className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+                  onClick={toggleDropdown}
+                >
+                  <FaBook className="mr-2" /> All Books
+                </NavLink>
+                <NavLink
+                  to="/addbooks"
+                  className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+                  onClick={toggleDropdown}
+                >
+                  <FaPlusCircle className="mr-2" /> Add Books
+                </NavLink>
+                <NavLink
+                  to="/borrowed"
+                  className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+                  onClick={toggleDropdown}
+                >
+                  <FaBook className="mr-2" /> Borrowed Books
+                </NavLink>
+              </>
+            )}
+
+            {!user && (
+              <>
+                <NavLink
+                  to="/reg"
+                  className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+                  onClick={toggleDropdown}
+                >
+                  <FaUserPlus className="mr-2" /> Register
+                </NavLink>
+                <NavLink
+                  to="/login"
+                  className="block px-4 py-3 text-gray-800 hover:bg-blue-50 font-medium flex items-center"
+                  onClick={toggleDropdown}
+                >
+                  <FaSignInAlt className="mr-2" /> Login
+                </NavLink>
+              </>
+            )}
+
+            {user && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  toggleDropdown();
+                }}
+                className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 font-medium flex items-center"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Mobile Dropdown Menu */}
-      {dropdownVisible && (
-        <div className="md:hidden absolute top-16 left-1/2 -translate-x-1/2 bg-white w-11/12 py-3 rounded-lg shadow-lg z-10">
-          <NavLink
-            to="/"
-            className="block text-center py-2 text-lg font-bold text-gray-800"
-          >
-            Home
-          </NavLink>
-          {user && (
-            <>
-              <NavLink
-                to="/allbooks"
-                className="block text-center py-2 text-lg font-bold text-gray-800"
-              >
-                All Books
-              </NavLink>
-              <NavLink
-                to="/addbooks"
-                className="block text-center py-2 text-lg font-bold text-gray-800"
-              >
-                Add Books
-              </NavLink>
-              <NavLink
-                to="/borrowed"
-                className="block text-center py-2 text-lg font-bold text-gray-800"
-              >
-                Borrowed Books
-              </NavLink>
-            </>
-          )}
-          {!user && (
-            <>
-              <NavLink
-                to="/reg"
-                className="block text-center py-2 text-lg font-bold text-gray-800"
-              >
-                Registration
-              </NavLink>
-              <NavLink
-                to="/login"
-                className="block text-center py-2 text-lg font-bold text-gray-800"
-              >
-                Login
-              </NavLink>
-            </>
-          )}
-        </div>
-      )}
-
-      <hr className="w-full h-[0.5px] bg-yellow-100 mt-1" />
-    </>
+    </nav>
   );
 };
 
