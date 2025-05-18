@@ -4,6 +4,7 @@ import { AuthContext } from "../../ContexProvider/AuthProvider";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Helmet } from "react-helmet";
+
 const BorrowedBooks = () => {
   const borrowedData = useLoaderData(); // All borrowed books data
   const { user } = useContext(AuthContext); // Logged-in user details
@@ -66,9 +67,13 @@ const BorrowedBooks = () => {
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">Author: {book.author}</p>
               <p className="text-sm text-gray-600">Category: {book.category}</p>
-              <p className="text-sm text-gray-600">Rating: {book.rating}⭐</p>
+              <p className="text-sm text-gray-600">
+                Rating: {book.rating || "N/A"}⭐
+              </p>
               <p className="text-sm text-gray-800 mt-2">
-                {book.details.slice(0, 100)}...
+                {book.details
+                  ? book.details.slice(0, 100) + "..."
+                  : "No details available"}
               </p>
               <button
                 onClick={() => handleReturnBook(book._id, book.category)}
