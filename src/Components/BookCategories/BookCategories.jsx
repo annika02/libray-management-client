@@ -8,10 +8,10 @@ const BookCategories = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { id: 1, name: "Fiction", path: "fiction" },
-    { id: 2, name: "Non-Fiction", path: "nonfiction" }, // Use nonfiction for path
-    { id: 3, name: "Science", path: "science" },
-    { id: 4, name: "History", path: "history" },
+    { id: 1, name: "Fiction", path: "fiction", image: fictionImg },
+    { id: 2, name: "Non-Fiction", path: "nonfiction", image: nonFictionImg },
+    { id: 3, name: "Science", path: "science", image: scienceImg },
+    { id: 4, name: "History", path: "history", image: historyImg },
   ];
 
   const handleCategoryClick = (path) => {
@@ -19,17 +19,17 @@ const BookCategories = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
       {categories.map((category) => (
         <div
           key={category.id}
-          className="border rounded-lg shadow-lg cursor-pointer"
           onClick={() => handleCategoryClick(category.path)}
+          className="border rounded-lg shadow-lg cursor-pointer transform transition-transform duration-300 hover:scale-105 hover:shadow-2xl"
         >
           <img
             src={category.image}
             alt={category.name}
-            className="w-full h-40 object-cover rounded-t-lg"
+            className="w-full h-40 object-cover rounded-t-lg transition-transform duration-300 hover:scale-110"
           />
           <div className="p-4">
             <h2 className="text-xl font-bold text-center">{category.name}</h2>
