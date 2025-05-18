@@ -1,19 +1,16 @@
 import { useState } from "react";
-import axios from "axios";
-import { toast } from "react-toastify";
 import Swal from "sweetalert2";
-import { Helmet } from "react-helmet";
 
 const AddBook = () => {
   const [bookData, setBookData] = useState({
-    image: "", // This will store the image URL
+    image: "",
     name: "",
     quantity: 0,
     author: "",
     category: "",
-    description: "",
+    details: "",
     rating: 1,
-    email: "", // Add email to the state
+    email: "",
   });
 
   const handleInputChange = (e) => {
@@ -28,7 +25,7 @@ const AddBook = () => {
     const value = e.target.value;
     setBookData((prevData) => ({
       ...prevData,
-      image: value, // Set the URL instead of a file
+      image: value,
     }));
   };
 
@@ -37,43 +34,47 @@ const AddBook = () => {
 
     const formData = {
       email: bookData.email,
-      image: bookData.image, // Use the URL here
+      image: bookData.image,
       name: bookData.name,
       quantity: bookData.quantity,
       author: bookData.author,
       category: bookData.category,
-      description: bookData.description,
+      details: bookData.details,
       rating: bookData.rating,
     };
 
     try {
-      // Send the form data to the server
-      await axios.post(
+      const response = await fetch(
         "https://library-server-alpha.vercel.app/allbooks",
-        formData,
         {
+          method: "POST",
           headers: {
-            "Content-Type": "application/json", // Set as JSON
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify(formData),
         }
       );
+
+      if (!response.ok) {
+        throw new Error("Failed to add book");
+      }
+
       Swal.fire({
         icon: "success",
         title: "Added Book Successfully",
         text: "Book has been added.",
       });
     } catch (error) {
-      toast.error(
-        `Failed to add book: ${error.response?.data?.message || error.message}`
-      );
+      Swal.fire({
+        icon: "error",
+        title: "Failed to Add Book",
+        text: error.message,
+      });
     }
   };
 
   return (
     <div className="p-6">
-      <Helmet>
-        <title>Add Books</title>
-      </Helmet>
       <h2 className="text-2xl font-bold">Add New Book</h2>
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
         <div>
@@ -140,17 +141,17 @@ const AddBook = () => {
             required
             className="border p-2 w-full"
           >
-            <option value="Novel">Fiction</option>
-            <option value="Thriller">Non-Fiction</option>
-            <option value="History">History</option>
-            <option value="Drama">Science</option>
+            <option value="fiction">Fiction</option>
+            <option value="nonfiction">Non-Fiction</option>
+            <option value="history">History</option>
+            <option value="science">Science</option>
           </select>
         </div>
         <div>
           <label>Short Description</label>
           <textarea
-            name="description"
-            value={bookData.description}
+            name="details"
+            value={bookData.details}
             onChange={handleInputChange}
             required
             className="border p-2 w-full"

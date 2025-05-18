@@ -4,7 +4,7 @@ import ReactStars from "react-rating-stars-component";
 import axios from "axios";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
 
-// Category mapping to match backend routes
+// Category mapping
 const categoryMap = {
   fiction: "fiction",
   science: "science",
@@ -18,7 +18,6 @@ const categoryMap = {
   Nonfiction: "nonfiction",
 };
 
-// Normalize category to match backend logic
 const normalizeCategory = (category) => {
   if (!category) return "fiction";
   const normalized = category.toLowerCase().replace(/\s|-/g, "");
@@ -34,20 +33,18 @@ const FictionBook = () => {
 
   const fetchBooks = async () => {
     try {
-      const fictionResponse = await axios.get(
+      const response = await axios.get(
         "https://library-server-alpha.vercel.app/fiction"
       );
-      console.log("Fetched from /fiction:", fictionResponse.data);
-
-      if (fictionResponse.data && fictionResponse.data.length > 0) {
-        setBooks(fictionResponse.data);
+      if (response.data && response.data.length > 0) {
+        setBooks(response.data);
         setError(null);
       } else {
-        setError("No fiction books found in the library.");
+        setError("No fiction books found.");
       }
     } catch (err) {
       console.error("Error fetching books:", err);
-      setError("Failed to load fiction books. Please try again later.");
+      setError("Failed to load fiction books.");
     } finally {
       setLoading(false);
     }
@@ -55,27 +52,18 @@ const FictionBook = () => {
 
   useEffect(() => {
     fetchBooks();
-
-    // Poll every 15 seconds (increased from 10 for better performance)
     const intervalId = setInterval(fetchBooks, 15000);
-
     return () => clearInterval(intervalId);
   }, []);
 
   const handleDetails = (category, id) => {
     const backendCategory = normalizeCategory(category);
-    console.log(`Attempting to navigate to /details/${backendCategory}/${id}`);
-
     const bookExists = books.some((book) => book._id === id);
-
     if (!bookExists) {
-      console.error(
-        `Book with ID ${id} not found in local ${backendCategory} data`
-      );
-      alert("This book is currently unavailable. Please try another book.");
+      console.error(`Book with ID ${id} not found`);
+      alert("Book unavailable.");
       return;
     }
-
     if (user) {
       navigate(`/details/${backendCategory}/${id}`);
     } else {
@@ -83,7 +71,6 @@ const FictionBook = () => {
     }
   };
 
-  // Skeleton loader component for better UX during loading
   const SkeletonCard = () => (
     <div className="bg-white p-4 rounded-lg shadow-md animate-pulse">
       <div className="w-full h-64 bg-gray-300 rounded-lg mb-4"></div>
@@ -116,7 +103,7 @@ const FictionBook = () => {
             ))}
         </div>
       ) : books.length === 0 ? (
-        <p>No fiction books available at the moment.</p>
+        <p>No fiction books available.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {books.map((book) => (
@@ -131,9 +118,8 @@ const FictionBook = () => {
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">Author: {book.author}</p>
-              <p className="text-sm text-gray-600">Category: {book.category}</p>
               <p className="text-sm text-gray-600">
-                Quantity Available: {book.quantity || 0}
+                Available Quantity: {book.quantity || 0}
               </p>
               <div className="flex items-center mt-2">
                 <ReactStars

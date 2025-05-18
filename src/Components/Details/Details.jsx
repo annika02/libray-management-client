@@ -1,257 +1,204 @@
-import { useLoaderData } from "react-router-dom";
-import { useContext, useState } from "react";
+import { useParams } from "react-router-dom";
+import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
-import axios from "axios";
-import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+
+const categoryMap = {
+  fiction: "fiction",
+  science: "science",
+  history: "history",
+  nonfiction: "nonfiction",
+  "non-fiction": "nonfiction",
+  Fiction: "fiction",
+  Science: "science",
+  History: "history",
+  NonFiction: "nonfiction",
+  Nonfiction: "nonfiction",
+  Novel: "fiction",
+  Thriller: "nonfiction",
+  Drama: "science",
+};
 
 const Details = () => {
-  const data = useLoaderData(); // Load book data
-  const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  // Check if data is valid
-  if (!data || !data._id) {
-    return (
-      <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-4">Book Not Found</h1>
-        <p className="text-gray-600">
-          The requested book could not be found. Please try another book.
-        </p>
-      </div>
-    );
-  }
-
-  const {
-    name,
-    author,
-    category,
-    details,
-    image,
-    quantity: initialQuantity,
-    rating,
-    _id,
-  } = data;
-  const email = user.email;
-  const borrowedInfo = {
-    email,
-    name,
-    author,
-    category,
-    details,
-    image,
-    quantity: Number(initialQuantity) || 0,
-    rating,
-    _id,
-    borrowedDate: new Date().toISOString().split("T")[0], // Current date
-    returnDate: "",
-  };
-  console.log("Loaded book data:", data);
-  const [quantity, setQuantity] = useState(Number(initialQuantity) || 0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { category, id } = useParams();
+  const [book, setBook] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [message, setMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
   const [returnDate, setReturnDate] = useState("");
 
-  const handleBorrow = async () => {
-    const updatedBorrowedInfo = { ...borrowedInfo, returnDate };
+  const { user } = useContext(AuthContext);
+
+  const normalizeCategory = (cat) => {
+    if (!cat) return "fiction";
+    const normalized = cat.toLowerCase().replace(/[\s-]+/g, "");
+    return categoryMap[normalized] || "fiction";
+  };
+
+  const fetchBook = async () => {
     try {
-      const postResponse = await axios.post(
-        "https://library-server-alpha.vercel.app/borrow",
-        updatedBorrowedInfo
+      setLoading(true);
+      const endpointCategory = normalizeCategory(category);
+      const response = await fetch(
+        `https://library-server-alpha.vercel.app/${endpointCategory}/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
-      console.log("Borrow request sent:", postResponse.data);
-    } catch (postError) {
-      console.error(
-        "Error posting borrow request:",
-        postError.response?.data || postError.message
-      );
-      Swal.fire({
-        icon: "error",
-        title: "Borrow Failed",
-        text:
-          postError.response?.data?.error || "Failed to save borrow request.",
-      });
+      const data = await response.json();
+      if (data?.error) {
+        setError(data.error);
+        setBook(null);
+      } else {
+        setBook(data);
+        setError(null);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch book details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBorrow = async () => {
+    if (!returnDate) {
+      setMessage("Please select a return date.");
       return;
     }
 
-    if (quantity > 0) {
-      try {
-        const patchResponse = await axios.patch(
-          `https://library-server-alpha.vercel.app/${normalizeCategory(
-            category
-          )}/${_id}/borrow`
-        );
-        console.log("Patch response:", patchResponse.data);
-
-        if (patchResponse.status === 200) {
-          setQuantity((prev) => prev - 1);
-          Swal.fire({
-            icon: "success",
-            title: "Borrowed Successfully",
-            text: `${name} has been borrowed.`,
-          });
-          setIsModalOpen(false);
+    try {
+      const normalizedCategory = normalizeCategory(book.category);
+      const borrowResponse = await fetch(
+        `https://library-server-alpha.vercel.app/borrow`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            bookId: id,
+            name: user.displayName,
+            email: user.email,
+            category: normalizedCategory,
+            quantity: 1,
+            image: book.image,
+            details: book.details || "No description available",
+            returnDate,
+            borrowedDate: new Date().toISOString(),
+          }),
         }
-      } catch (patchError) {
-        console.error(
-          "Error borrowing the book:",
-          patchError.response?.data || patchError.message
-        );
-        Swal.fire({
-          icon: "error",
-          title: "Borrow Failed",
-          text:
-            patchError.response?.data?.error ||
-            "Failed to update book quantity.",
-        });
-        const updatedData = await axios.get(
-          `https://library-server-alpha.vercel.app/${normalizeCategory(
-            category
-          )}/${_id}`
-        );
-        setQuantity(Number(updatedData.data.quantity) || 0);
+      );
+
+      if (!borrowResponse.ok) {
+        throw new Error("Borrow request failed");
       }
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Out of Stock",
-        text: "No copies available to borrow.",
-      });
+
+      const patchResponse = await fetch(
+        `https://library-server-alpha.vercel.app/${normalizedCategory}/${id}/borrow`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ quantityToBorrow: 1 }),
+        }
+      );
+
+      if (!patchResponse.ok) {
+        throw new Error("Borrow quantity update failed");
+      }
+
+      setMessage("Book borrowed successfully.");
+      setShowModal(false);
+      fetchBook();
+    } catch (err) {
+      console.error(err);
+      setMessage(err.message || "Borrow failed.");
     }
   };
 
-  const handleUpdate = () => {
-    localStorage.setItem("id", _id);
-    navigate("/update");
-  };
+  useEffect(() => {
+    fetchBook();
+  }, [category, id]);
 
-  const normalizeCategory = (category) => {
-    const categoryMap = {
-      fiction: "fiction",
-      science: "science",
-      history: "history",
-      nonfiction: "non-fiction",
-      "non-fiction": "non-fiction",
-      Fiction: "fiction",
-      Science: "science",
-      History: "history",
-      NonFiction: "non-fiction",
-      Nonfiction: "non-fiction",
-    };
-    if (!category) return "fiction";
-    const normalized = category.toLowerCase().replace(/\s|-/g, "");
-    return categoryMap[normalized] || normalized;
-  };
+  if (loading) return <p>Loading book details...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="flex-shrink-0">
-          <img
-            src={image}
-            alt={name}
-            className="w-full md:w-80 h-auto rounded-lg shadow-lg"
-          />
-        </div>
-        <div className="flex flex-col justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-4">{name}</h1>
-            <p className="text-lg text-gray-700 mb-2">
-              <strong>Author:</strong> {author}
+    <div className="p-4 max-w-2xl mx-auto border rounded-xl shadow-lg bg-white">
+      <h2 className="text-2xl font-bold mb-2">{book.name}</h2>
+      <img
+        src={book.image}
+        alt={book.name}
+        className="w-full max-h-80 object-cover rounded mb-4"
+      />
+      <p>
+        <strong>Author:</strong> {book.author}
+      </p>
+      <p>
+        <strong>Category:</strong> {book.category}
+      </p>
+      <p>
+        <strong>Rating:</strong> {book.rating}
+      </p>
+      <p>
+        <strong>Quantity:</strong> {book.quantity}
+      </p>
+      <p className="mt-2 text-gray-600">
+        <strong>Description:</strong> {book.details}
+      </p>
+
+      <button
+        onClick={() => setShowModal(true)}
+        disabled={book.quantity <= 0}
+        className={`mt-6 px-4 py-2 rounded text-white ${
+          book.quantity <= 0
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-blue-500 hover:bg-blue-600"
+        }`}
+      >
+        {book.quantity <= 0 ? "Out of Stock" : "Borrow"}
+      </button>
+
+      {message && <p className="mt-4 text-blue-600">{message}</p>}
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Borrow Book</h3>
+            <p>
+              <strong>Name:</strong> {user.displayName}
             </p>
-            <p className="text-lg text-gray-700 mb-2">
-              <strong>Category:</strong> {category}
+            <p>
+              <strong>Email:</strong> {user.email}
             </p>
-            <p className="text-lg text-gray-700 mb-2">
-              <strong>Rating:</strong> {rating} ⭐
-            </p>
-            <p className="text-lg text-gray-700 mb-2">
-              <strong>Quantity Available:</strong> {quantity}
-            </p>
-          </div>
-          <div className="mt-6">
-            <h2 className="text-2xl font-semibold mb-4">Description</h2>
-            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-              {details}
-            </p>
-          </div>
-          <div className="mt-6 space-x-2">
-            <button
-              className={`px-4 py-2 rounded-lg text-white ${
-                quantity === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              }`}
-              onClick={() => setIsModalOpen(true)}
-              disabled={quantity === 0}
-            >
-              Borrow
-            </button>
-            <button
-              onClick={handleUpdate}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-            >
-              Update
-            </button>
-          </div>
-        </div>
-      </div>
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 mb-[60px]">
-            <h2 className="text-2xl font-bold mb-4">Borrow {name}</h2>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleBorrow();
-              }}
-            >
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <input
-                  type="text"
-                  value={user.displayName || "Unknown"}
-                  readOnly
-                  className="w-full px-4 py-2 border rounded-lg bg-gray-100"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  readOnly
-                  className="w-full px-4 py-2 border rounded-lg bg-gray-100"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Return Date
-                </label>
-                <input
-                  type="date"
-                  value={returnDate}
-                  onChange={(e) => setReturnDate(e.target.value)}
-                  required
-                  min={new Date().toISOString().split("T")[0]} // Prevent past dates
-                  className="w-full px-4 py-2 border rounded-lg"
-                />
-              </div>
-              <div className="flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                >
-                  Confirm
-                </button>
-              </div>
-            </form>
+            <label className="block mt-4">
+              <span className="text-sm font-medium">Return Date:</span>
+              <input
+                type="date"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                className="mt-1 block w-full border px-2 py-1 rounded"
+              />
+            </label>
+            <div className="mt-6 flex justify-end space-x-2">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBorrow}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}
