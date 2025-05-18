@@ -5,6 +5,7 @@ import {
   FaPlusCircle,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { NavLink } from "react-router-dom";
 
 const LibraryBanner = () => {
   return (
@@ -53,7 +54,7 @@ const LibraryBanner = () => {
                   className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-indigo-900 font-bold rounded-lg shadow-lg transition-all"
                 >
                   <FaPlusCircle className="text-xl" />
-                  Add New Book
+                  <NavLink to="/addbooks">Add New Book</NavLink>
                 </motion.button>
 
                 <motion.button
