@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ReactStars from "react-rating-stars-component";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
 
-// Category mapping
+// Category mapping for normalization
 const categoryMap = {
   fiction: "fiction",
   science: "science",
@@ -26,53 +26,92 @@ const normalizeCategory = (category) => {
   return categoryMap[normalized] || "nonfiction";
 };
 
-const NonFictionBook = () => {
+const NonFictionBooks = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Fetch books from server
   const fetchBooks = async () => {
     try {
       const response = await fetch(
-        "https://library-server-alpha.vercel.app/nonfiction",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        `https://library-server-alpha.vercel.app/allbooks?t=${Date.now()}`
       );
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON");
+      }
+
       const data = await response.json();
-      if (data && data.length > 0) {
-        setBooks(data);
-        setError(null);
-      } else {
+
+      const nonFictionBooks = data.filter(
+        (book) =>
+          book._id &&
+          book.name &&
+          book.author &&
+          book.category &&
+          normalizeCategory(book.category) === "nonfiction"
+      );
+
+      if (nonFictionBooks.length === 0) {
         setError("No non-fiction books found.");
+        setBooks([]);
+      } else {
+        setBooks(nonFictionBooks);
+        setError(null);
       }
     } catch (err) {
-      console.error("Error fetching books:", err);
-      setError("Failed to load non-fiction books.");
+      setError(`Failed to load non-fiction books: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    setBooks([]);
     fetchBooks();
-    const intervalId = setInterval(fetchBooks, 15000);
-    return () => clearInterval(intervalId);
   }, []);
 
-  const handleDetails = (category, id) => {
+  // Validate single book ID
+  const validateBookId = async (id) => {
+    try {
+      const response = await fetch(
+        `https://library-server-alpha.vercel.app/nonfiction/${id}?t=${Date.now()}`
+      );
+      if (!response.ok) return false;
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json"))
+        return false;
+
+      const data = await response.json();
+      return !!data && !data.error;
+    } catch (err) {
+      console.error(`Error validating ID ${id}:`, err);
+      return false;
+    }
+  };
+
+  const handleDetails = async (category, id) => {
     const backendCategory = normalizeCategory(category);
     const bookExists = books.some((book) => book._id === id);
     if (!bookExists) {
-      console.error(`Book with ID ${id} not found`);
       alert("Book unavailable.");
       return;
     }
+
+    const isValid = await validateBookId(id);
+    if (!isValid) {
+      alert("Book unavailable.");
+      setBooks((prev) => prev.filter((book) => book._id !== id));
+      fetchBooks();
+      return;
+    }
+
     if (user) {
       navigate(`/details/${backendCategory}/${id}`);
     } else {
@@ -91,25 +130,17 @@ const NonFictionBook = () => {
     </div>
   );
 
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <h2 className="text-2xl font-semibold mb-6">Non-Fiction Books</h2>
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-semibold mb-6">Non-Fiction Books</h2>
-      {loading ? (
+
+      {error ? (
+        <p className="text-red-500">{error}</p>
+      ) : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array(4)
-            .fill()
-            .map((_, index) => (
-              <SkeletonCard key={index} />
-            ))}
+          {Array.from({ length: 4 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : books.length === 0 ? (
         <p>No non-fiction books available.</p>
@@ -129,6 +160,9 @@ const NonFictionBook = () => {
               <p className="text-sm text-gray-600">Author: {book.author}</p>
               <p className="text-sm text-gray-600">
                 Category: {book.category || "Non-Fiction"}
+              </p>
+              <p className="text-sm text-gray-600">
+                Description: {book.details || "No description available"}
               </p>
               <p className="text-sm text-gray-600">
                 Available Quantity: {book.quantity || 0}
@@ -156,4 +190,4 @@ const NonFictionBook = () => {
   );
 };
 
-export default NonFictionBook;
+export default NonFictionBooks;

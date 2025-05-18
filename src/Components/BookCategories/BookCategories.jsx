@@ -3,17 +3,19 @@ import fictionImg from "../../assets/friction.jpg";
 import nonFictionImg from "../../assets/nonFection.jpg";
 import scienceImg from "../../assets/science.jpg";
 import historyImg from "../../assets/history.jpg";
+
 const BookCategories = () => {
   const navigate = useNavigate();
 
   const categories = [
-    { id: 1, name: "Fiction", image: fictionImg },
-    { id: 2, name: "Non-Fiction", image: nonFictionImg },
-    { id: 3, name: "Science", image: scienceImg },
-    { id: 4, name: "History", image: historyImg },
+    { id: 1, name: "Fiction", path: "fiction" },
+    { id: 2, name: "Non-Fiction", path: "nonfiction" }, // Use nonfiction for path
+    { id: 3, name: "Science", path: "science" },
+    { id: 4, name: "History", path: "history" },
   ];
-  const handleCategoryClick = (categoryName) => {
-    navigate(`/${categoryName.toLowerCase()}`);
+
+  const handleCategoryClick = (path) => {
+    navigate(`/${path}`);
   };
 
   return (
@@ -22,10 +24,10 @@ const BookCategories = () => {
         <div
           key={category.id}
           className="border rounded-lg shadow-lg cursor-pointer"
-          onClick={() => handleCategoryClick(category.name)}
+          onClick={() => handleCategoryClick(category.path)}
         >
           <img
-            src={`${category.image}`}
+            src={category.image}
             alt={category.name}
             className="w-full h-40 object-cover rounded-t-lg"
           />

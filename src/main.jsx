@@ -26,13 +26,13 @@ const categoryMap = {
   fiction: "fiction",
   science: "science",
   history: "history",
-  nonfiction: "non-fiction",
-  "non-fiction": "non-fiction",
+  nonfiction: "nonfiction",
+  "non-fiction": "nonfiction",
   Fiction: "fiction",
   Science: "science",
   History: "history",
-  NonFiction: "non-fiction",
-  Nonfiction: "non-fiction",
+  NonFiction: "nonfiction",
+  Nonfiction: "nonfiction",
 };
 
 const normalizeCategory = (category) => {
@@ -74,10 +74,12 @@ const router = createBrowserRouter([
         loader: () => fetch("https://library-server-alpha.vercel.app/history"),
       },
       {
-        path: "/non-fiction",
+        path: "/nonfiction",
         element: <NonFictionBooks></NonFictionBooks>,
         loader: () =>
-          fetch("https://library-server-alpha.vercel.app/nonfiction"),
+          fetch(
+            `https://library-server-alpha.vercel.app/nonfiction?t=${Date.now()}`
+          ),
       },
       {
         path: "/details/:category/:id",
@@ -89,15 +91,21 @@ const router = createBrowserRouter([
         loader: async ({ params }) => {
           const { id, category: rawCategory } = params;
           const category = normalizeCategory(rawCategory);
-          console.log(`Fetching details for /${category}/${id}`); // Debug log
+          console.log(`Fetching details for /${category}/${id}`);
           const response = await fetch(
-            `https://library-server-alpha.vercel.app/${category}/${id}`
+            `https://library-server-alpha.vercel.app/${category}/${id}?t=${Date.now()}`
           );
           if (!response.ok) {
             console.error(
               `Error fetching /${category}/${id}: ${response.status}`
             );
-            throw new Response("Not Found", { status: 404 });
+            throw new Response(`Book not found: ${category}/${id}`, {
+              status: response.status,
+            });
+          }
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new Response("Invalid response format", { status: 500 });
           }
           return response.json();
         },

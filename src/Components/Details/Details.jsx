@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
+import Swal from "sweetalert2";
 
 const categoryMap = {
   fiction: "fiction",
@@ -18,6 +19,12 @@ const categoryMap = {
   Drama: "science",
 };
 
+const normalizeCategory = (cat) => {
+  if (!cat) return "fiction";
+  const normalized = cat.toLowerCase().replace(/[\s-]+/g, "");
+  return categoryMap[normalized] || "fiction";
+};
+
 const Details = () => {
   const { category, id } = useParams();
   const [book, setBook] = useState(null);
@@ -26,14 +33,7 @@ const Details = () => {
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [returnDate, setReturnDate] = useState("");
-
   const { user } = useContext(AuthContext);
-
-  const normalizeCategory = (cat) => {
-    if (!cat) return "fiction";
-    const normalized = cat.toLowerCase().replace(/[\s-]+/g, "");
-    return categoryMap[normalized] || "fiction";
-  };
 
   const fetchBook = async () => {
     try {
@@ -48,6 +48,13 @@ const Details = () => {
           },
         }
       );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON");
+      }
       const data = await response.json();
       if (data?.error) {
         setError(data.error);
@@ -57,8 +64,9 @@ const Details = () => {
         setError(null);
       }
     } catch (err) {
-      console.error(err);
-      setError("Failed to fetch book details.");
+      console.error("Error fetching book:", err);
+      setError(`Failed to fetch book details: ${err.message}`);
+      setBook(null);
     } finally {
       setLoading(false);
     }
@@ -116,8 +124,8 @@ const Details = () => {
       setShowModal(false);
       fetchBook();
     } catch (err) {
-      console.error(err);
-      setMessage(err.message || "Borrow failed.");
+      console.error("Borrow error:", err);
+      setMessage(`Borrow failed: ${err.message}`);
     }
   };
 
@@ -149,7 +157,8 @@ const Details = () => {
         <strong>Quantity:</strong> {book.quantity}
       </p>
       <p className="mt-2 text-gray-600">
-        <strong>Description:</strong> {book.details}
+        <strong>Description:</strong>{" "}
+        {book.details || "No description available"}
       </p>
 
       <button
