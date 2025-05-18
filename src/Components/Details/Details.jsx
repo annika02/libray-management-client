@@ -31,7 +31,7 @@ const Details = () => {
     quantity: initialQuantity,
     rating,
     _id,
-  } = data; // Destructure data
+  } = data;
   const email = user.email;
   const borrowedInfo = {
     email,
@@ -40,64 +40,90 @@ const Details = () => {
     category,
     details,
     image,
-    quantity: initialQuantity,
+    quantity: Number(initialQuantity) || 0,
     rating,
     _id,
+    borrowedDate: new Date().toISOString().split("T")[0], // Current date
+    returnDate: "",
   };
-  console.log("Book ID:", _id); // Debug log
-  const [quantity, setQuantity] = useState(initialQuantity); // Manage book quantity
-  const [isModalOpen, setIsModalOpen] = useState(false); // Manage modal visibility
-  const [returnDate, setReturnDate] = useState(""); // Manage return date input
+  console.log("Loaded book data:", data);
+  const [quantity, setQuantity] = useState(Number(initialQuantity) || 0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [returnDate, setReturnDate] = useState("");
 
   const handleBorrow = async () => {
+    const updatedBorrowedInfo = { ...borrowedInfo, returnDate };
     try {
-      const response = await axios.post(
+      const postResponse = await axios.post(
         "https://library-server-alpha.vercel.app/borrow",
-        borrowedInfo
+        updatedBorrowedInfo
       );
-      console.log("Borrow request sent:", response.data); // Debug log
-    } catch (error) {
-      console.error("Error posting borrow request:", error.message);
+      console.log("Borrow request sent:", postResponse.data);
+    } catch (postError) {
+      console.error(
+        "Error posting borrow request:",
+        postError.response?.data || postError.message
+      );
+      Swal.fire({
+        icon: "error",
+        title: "Borrow Failed",
+        text:
+          postError.response?.data?.error || "Failed to save borrow request.",
+      });
+      return;
     }
 
     if (quantity > 0) {
       try {
-        // Send the request to the server to decrement the quantity
-        const response = await axios.patch(
+        const patchResponse = await axios.patch(
           `https://library-server-alpha.vercel.app/${normalizeCategory(
             category
           )}/${_id}/borrow`
         );
+        console.log("Patch response:", patchResponse.data);
 
-        if (response.status === 200) {
-          setQuantity(quantity - 1); // Update the quantity in the UI
+        if (patchResponse.status === 200) {
+          setQuantity((prev) => prev - 1);
           Swal.fire({
             icon: "success",
-            title: "Borrowed Book Successfully",
-            text: "Book",
-            footer: '<a href="#">Why do I have this issue?</a>',
+            title: "Borrowed Successfully",
+            text: `${name} has been borrowed.`,
           });
-          setIsModalOpen(false); // Close modal
+          setIsModalOpen(false);
         }
-      } catch (error) {
-        console.error("Error borrowing the book:", error);
+      } catch (patchError) {
+        console.error(
+          "Error borrowing the book:",
+          patchError.response?.data || patchError.message
+        );
         Swal.fire({
           icon: "error",
           title: "Borrow Failed",
-          text: "There was an error borrowing the book. Please try again.",
+          text:
+            patchError.response?.data?.error ||
+            "Failed to update book quantity.",
         });
+        const updatedData = await axios.get(
+          `https://library-server-alpha.vercel.app/${normalizeCategory(
+            category
+          )}/${_id}`
+        );
+        setQuantity(Number(updatedData.data.quantity) || 0);
       }
+    } else {
+      Swal.fire({
+        icon: "warning",
+        title: "Out of Stock",
+        text: "No copies available to borrow.",
+      });
     }
   };
 
   const handleUpdate = () => {
-    // Store the book ID in localStorage
     localStorage.setItem("id", _id);
-    // Navigate to the update page
     navigate("/update");
   };
 
-  // Reuse normalizeCategory for borrow URL
   const normalizeCategory = (category) => {
     const categoryMap = {
       fiction: "fiction",
@@ -119,7 +145,6 @@ const Details = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="flex flex-col md:flex-row gap-8">
-        {/* Book Image */}
         <div className="flex-shrink-0">
           <img
             src={image}
@@ -127,7 +152,6 @@ const Details = () => {
             className="w-full md:w-80 h-auto rounded-lg shadow-lg"
           />
         </div>
-        {/* Book Details */}
         <div className="flex flex-col justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-4">{name}</h1>
@@ -144,14 +168,12 @@ const Details = () => {
               <strong>Quantity Available:</strong> {quantity}
             </p>
           </div>
-          {/* Description */}
           <div className="mt-6">
-            <h2 className="text-2xl font-semibold mb-4">Book Description</h2>
+            <h2 className="text-2xl font-semibold mb-4">Description</h2>
             <p className="text-gray-600 leading-relaxed whitespace-pre-line">
               {details}
             </p>
           </div>
-          {/* Borrow and Update Buttons */}
           <div className="mt-6 space-x-2">
             <button
               className={`px-4 py-2 rounded-lg text-white ${
@@ -173,11 +195,10 @@ const Details = () => {
           </div>
         </div>
       </div>
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96 mb-[60px]">
-            <h2 className="text-2xl font-bold mb-4">Borrow Book</h2>
+            <h2 className="text-2xl font-bold mb-4">Borrow {name}</h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -188,7 +209,7 @@ const Details = () => {
                 <label className="block text-sm font-medium mb-2">Name</label>
                 <input
                   type="text"
-                  value={user.displayName}
+                  value={user.displayName || "Unknown"}
                   readOnly
                   className="w-full px-4 py-2 border rounded-lg bg-gray-100"
                 />
@@ -197,7 +218,7 @@ const Details = () => {
                 <label className="block text-sm font-medium mb-2">Email</label>
                 <input
                   type="email"
-                  value={user.email}
+                  value={email}
                   readOnly
                   className="w-full px-4 py-2 border rounded-lg bg-gray-100"
                 />
@@ -211,6 +232,7 @@ const Details = () => {
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
                   required
+                  min={new Date().toISOString().split("T")[0]} // Prevent past dates
                   className="w-full px-4 py-2 border rounded-lg"
                 />
               </div>

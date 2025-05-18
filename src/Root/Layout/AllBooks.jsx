@@ -32,42 +32,46 @@ const AllBooks = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchBooks = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await axios.get(
-          "https://library-server-alpha.vercel.app/allbooks"
+    try {
+      const response = await axios.get(
+        "https://library-server-alpha.vercel.app/allbooks"
+      );
+      console.log("Fetched from /allbooks:", response.data);
+
+      if (response.data && response.data.length > 0) {
+        const uniqueBooks = Array.from(
+          new Map(response.data.map((book) => [book._id, book])).values()
         );
-        console.log("Fetched from /allbooks:", response.data);
-
-        if (response.data && response.data.length > 0) {
-          // Remove duplicates by _id to avoid key prop issues
-          const uniqueBooks = Array.from(
-            new Map(response.data.map((book) => [book._id, book])).values()
-          );
-          setBooks(uniqueBooks);
-        } else {
-          setError("No books found in the library.");
-        }
-      } catch (err) {
-        console.error("Error fetching books:", err);
-        setError("Failed to load books. Please try again later.");
-      } finally {
-        setLoading(false);
+        setBooks(uniqueBooks);
+      } else {
+        setError("No books found in the library.");
       }
-    };
+    } catch (err) {
+      console.error("Error fetching books:", err);
+      setError("Failed to load books. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBooks();
+
+    // Set up polling every 10 seconds
+    const intervalId = setInterval(fetchBooks, 10000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDetails = (category, id) => {
     const backendCategory = normalizeCategory(category);
     console.log(`Attempting to navigate to /details/${backendCategory}/${id}`);
 
-    // Check if the book exists in the local state
     const bookExists = books.some((book) => book._id === id);
 
     if (!bookExists) {
@@ -78,7 +82,6 @@ const AllBooks = () => {
       return;
     }
 
-    // Navigate based on user authentication
     if (user) {
       navigate(`/details/${backendCategory}/${id}`);
     } else {
@@ -87,9 +90,7 @@ const AllBooks = () => {
   };
 
   const handleUpdate = (id) => {
-    // Store the book ID in localStorage
     localStorage.setItem("id", id);
-    // Navigate to the update page
     navigate("/update");
   };
 
@@ -131,6 +132,9 @@ const AllBooks = () => {
               <h3 className="text-lg font-semibold">{book.name}</h3>
               <p className="text-sm text-gray-600">Author: {book.author}</p>
               <p className="text-sm text-gray-600">Category: {book.category}</p>
+              <p className="text-sm text-gray-600">
+                Quantity Available: {book.quantity || 0}
+              </p>
               <div className="flex items-center mt-2">
                 <ReactStars
                   count={5}

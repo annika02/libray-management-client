@@ -7,35 +7,30 @@ import { Helmet } from "react-helmet";
 
 const BorrowedBooks = () => {
   const borrowedData = useLoaderData(); // All borrowed books data
-  const { user } = useContext(AuthContext); // Logged-in user details
+  const { user } = useContext(AuthContext);
   const [userBorrowedBooks, setUserBorrowedBooks] = useState(
     borrowedData.filter((book) => book.email === user.email)
   );
 
   const handleReturnBook = async (bookId, category) => {
-    console.log(bookId);
+    console.log("Returning book:", { bookId, category });
     try {
-      const normalizedCategory = category.toLowerCase(); // Normalize category
-      const response = await axios.patch(
+      const normalizedCategory = category.toLowerCase();
+      const patchResponse = await axios.patch(
         `https://library-server-alpha.vercel.app/${normalizedCategory}/${bookId}/return`
       );
-      if (response.status === 200) {
-        // Delete the book after successful return
+      if (patchResponse.status === 200) {
         await axios.delete(
           `https://library-server-alpha.vercel.app/borrow/${bookId}`,
           {
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           }
         );
         Swal.fire({
           icon: "success",
-          title: "Successfully Deleted",
-          text: "The book has been deleted from your borrowed list.",
-          footer: '<a href="#">Why do I have this issue?</a>',
+          title: "Returned Successfully",
+          text: "The book has been returned.",
         });
-        // Remove the book from the userBorrowedBooks state
         setUserBorrowedBooks((prevBooks) =>
           prevBooks.filter((book) => book._id !== bookId)
         );
@@ -43,9 +38,13 @@ const BorrowedBooks = () => {
     } catch (error) {
       console.error(
         "Error returning the book:",
-        error.response || error.message
+        error.response?.data || error.message
       );
-      alert("Failed to return the book. Please check the category and ID.");
+      Swal.fire({
+        icon: "error",
+        title: "Return Failed",
+        text: error.response?.data?.error || "Failed to return the book.",
+      });
     }
   };
 
@@ -65,21 +64,18 @@ const BorrowedBooks = () => {
                 className="w-full h-48 object-cover rounded-md mb-4"
               />
               <h3 className="text-lg font-semibold">{book.name}</h3>
-              <p className="text-sm text-gray-600">Author: {book.author}</p>
               <p className="text-sm text-gray-600">Category: {book.category}</p>
               <p className="text-sm text-gray-600">
-                Rating: {book.rating || "N/A"}⭐
+                Borrowed: {book.borrowedDate}
               </p>
-              <p className="text-sm text-gray-800 mt-2">
-                {book.details
-                  ? book.details.slice(0, 100) + "..."
-                  : "No details available"}
+              <p className="text-sm text-gray-600">
+                Return By: {book.returnDate}
               </p>
               <button
                 onClick={() => handleReturnBook(book._id, book.category)}
                 className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
               >
-                Return Book
+                Return
               </button>
             </div>
           ))}
