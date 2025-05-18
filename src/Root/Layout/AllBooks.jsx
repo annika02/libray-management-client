@@ -4,7 +4,7 @@ import ReactStars from "react-rating-stars-component";
 import axios from "axios";
 import { AuthContext } from "../../ContexProvider/AuthProvider";
 
-// Category mapping to match backend routes (aligned with backend)
+// Category mapping to match backend routes
 const categoryMap = {
   fiction: "fiction",
   science: "science",
@@ -33,9 +33,6 @@ const AllBooks = () => {
   const navigate = useNavigate();
 
   const fetchBooks = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
       const response = await axios.get(
         "https://library-server-alpha.vercel.app/allbooks"
@@ -47,6 +44,7 @@ const AllBooks = () => {
           new Map(response.data.map((book) => [book._id, book])).values()
         );
         setBooks(uniqueBooks);
+        setError(null);
       } else {
         setError("No books found in the library.");
       }
@@ -61,10 +59,9 @@ const AllBooks = () => {
   useEffect(() => {
     fetchBooks();
 
-    // Set up polling every 10 seconds
-    const intervalId = setInterval(fetchBooks, 10000);
+    // Poll every 15 seconds
+    const intervalId = setInterval(fetchBooks, 15000);
 
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
@@ -94,14 +91,17 @@ const AllBooks = () => {
     navigate("/update");
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-4">
-        <h2 className="text-2xl font-semibold mb-6">All Books</h2>
-        <p>Loading books...</p>
-      </div>
-    );
-  }
+  // Skeleton loader component for better UX during loading
+  const SkeletonCard = () => (
+    <div className="bg-white p-4 rounded-lg shadow-md animate-pulse">
+      <div className="w-full h-64 bg-gray-300 rounded-lg mb-4"></div>
+      <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+      <div className="h-8 bg-gray-300 rounded w-1/2 mt-4"></div>
+    </div>
+  );
 
   if (error) {
     return (
@@ -115,7 +115,15 @@ const AllBooks = () => {
   return (
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-semibold mb-6">All Books</h2>
-      {books.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {Array(4)
+            .fill()
+            .map((_, index) => (
+              <SkeletonCard key={index} />
+            ))}
+        </div>
+      ) : books.length === 0 ? (
         <p>No books available at the moment.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -142,7 +150,7 @@ const AllBooks = () => {
                   edit={false}
                   size={24}
                 />
-                <span className="ml-2 text-sm">({book.rating})</span>
+                <span className="ml-2 text-sm">Rating: {book.rating} ★</span>
               </div>
               <div className="mt-4 space-x-2">
                 <button
