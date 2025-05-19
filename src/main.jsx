@@ -77,9 +77,7 @@ const router = createBrowserRouter([
         path: "/nonfiction",
         element: <NonFictionBooks></NonFictionBooks>,
         loader: () =>
-          fetch(
-            `https://library-server-alpha.vercel.app/nonfiction?t=${Date.now()}`
-          ),
+          fetch(`https://library-server-alpha.vercel.app/nonfiction`),
       },
       {
         path: "/details/:category/:id",
@@ -93,7 +91,7 @@ const router = createBrowserRouter([
           const category = normalizeCategory(rawCategory);
           console.log(`Fetching details for /${category}/${id}`);
           const response = await fetch(
-            `https://library-server-alpha.vercel.app/${category}/${id}?t=${Date.now()}`
+            `https://library-server-alpha.vercel.app/${category}/${id}`
           );
           if (!response.ok) {
             console.error(
